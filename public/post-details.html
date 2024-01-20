@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand">My Blog</a>
+            <form class="d-flex" role="search">
+                <button class="btn btn-outline-success" type="menu"><a href="/post-list.html">All Posts</a></button>
+                <button class="btn btn-outline-success" type="button"><a href="create-post.html">Create Posts</a></button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h4>Post Details</h4>
+        <div id="postDetails"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Extract post ID from the URL query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+
+            // Fetch post details from the server based on the post ID
+            fetch(`/post-details?id=${postId}`)
+                .then(response => response.json())
+                .then(postDetails => {
+                    var postDetailsContainer = document.getElementById('postDetails');
+
+                    // Dynamically generate HTML for the post details
+                    postDetailsContainer.innerHTML = `
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${postDetails.Title}</h5>
+                                <p class="card-text">${postDetails.Summary}</p>
+                                <p class="card-text">${postDetails.Body}</p>
+                                <p class="card-text">Author: ${postDetails.author_name}</p>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => console.error('Error fetching post details:', error));
+        });
+    </script>
+
+</body>
+
+</html>
