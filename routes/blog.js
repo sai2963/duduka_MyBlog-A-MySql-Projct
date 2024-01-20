@@ -1,13 +1,10 @@
-// routes/blog.js
 const express = require('express');
 const router = express.Router();
 const db = require('../data/database');
 
-// Define your routes and middleware here
-
 router.get('/create-post', (req, res) => {
   db.query('SELECT * FROM authors', (err, results) => {
-    if (err) {
+    if (err) {  
       console.error('Error fetching authors from the database:', err);
       res.status(500).json({ error: 'Internal Server Error' });
     } else {
@@ -111,15 +108,19 @@ router.put('/post-details', (req, res) => {
     (err, result) => {
       if (err) {
         console.error('Error updating post in the database:', err);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: 'Internal Server Error', details: err.message });
       } else {
-        res.status(200).json({
-          id: postId,
-          Title: title,
-          Summary: summary,
-          Body: body,
-          author_name: author_name,
-        });
+        if (result.affectedRows === 0) {
+          res.status(404).json({ error: 'Post not found.' });
+        } else {
+          res.status(200).json({
+            id: postId,
+            Title: title,
+            Summary: summary,
+            Body: body,
+            author_name: author_name,
+          });
+        }
       }
     }
   );

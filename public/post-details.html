@@ -61,8 +61,8 @@
                 <input type="text" class="form-control mb-2 d-none" id="postTitleInput" value="${postDetails.Title}">
                 <textarea class="form-control mb-2 resize-none d-none" id="postSummaryInput">${postDetails.Summary}</textarea>
                 <textarea class="form-control mb-2 resize-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
-                <input type="text" class="form-control mb-2 d-none" id="authorInput" value="${postDetails.author_name}">
-                <button type="button" class="btn btn-success btn-sm d-none" onclick="saveChanges()">Save Changes</button>
+                
+                <button type="button" class="btn btn-success btn-sm d-none" onclick="saveChanges()" id="saveChangesBtn">Save Changes</button>
               </div>
             </div>
           `;
@@ -83,7 +83,6 @@
           "postTitleInput",
           "postSummaryInput",
           "postBodyInput",
-          "authorInput",
           "saveChangesBtn",
         ],
         true
@@ -102,9 +101,9 @@
     function saveChanges() {
       const postId = getPostIdFromUrl();
       const updatedTitle = document.getElementById("postTitleInput").value;
-      const updatedSummary = document.getElementById("postSummaryInput").value;
+      const updatedSummary =
+        document.getElementById("postSummaryInput").value;
       const updatedBody = document.getElementById("postBodyInput").value;
-      const updatedAuthor = document.getElementById("authorInput").value;
 
       fetch(`/post-details?id=${postId}`, {
         method: "PUT",
@@ -115,7 +114,7 @@
           title: updatedTitle,
           summary: updatedSummary,
           body: updatedBody,
-          author_name: updatedAuthor,
+          author_name: document.getElementById("authorInput").value,
         }),
       })
         .then((response) => {
@@ -128,15 +127,17 @@
         })
         .then((updatedPost) => {
           document.getElementById("postTitle").innerText = updatedPost.Title;
-          document.getElementById("postSummary").innerText = updatedPost.Summary;
+          document.getElementById("postSummary").innerText =
+            updatedPost.Summary;
           document.getElementById("postBody").innerText = updatedPost.Body;
-          document.getElementById("author").innerText = `Author: ${updatedPost.author_name}`;
+          document.getElementById(
+            "author"
+          ).innerText = `Author: ${updatedPost.author_name}`;
 
           const elementsToHide = [
             "postTitleInput",
             "postSummaryInput",
             "postBodyInput",
-            "authorInput",
             "saveChangesBtn",
           ];
           const elementsToShow = [
@@ -161,4 +162,3 @@
     }
   </script>
 </body>
-</html>
