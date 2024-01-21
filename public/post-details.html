@@ -32,8 +32,10 @@
     <div id="postDetails"></div>
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
+ <!-- ... (your existing HTML code) ... -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
       const urlParams = new URLSearchParams(window.location.search);
       const postId = urlParams.get("id");
 
@@ -60,9 +62,9 @@
                 
                 <input type="text" class="form-control mb-2 d-none" id="postTitleInput" value="${postDetails.Title}">
                 <textarea class="form-control mb-2 resize-none d-none" id="postSummaryInput">${postDetails.Summary}</textarea>
-                <textarea class="form-control mb-2 resize-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
+                <textarea class="form-control mb-2 resi ze-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
                 
-                <button type="button" class="btn btn-success btn-sm d-none" onclick="saveChanges()" id="saveChangesBtn">Save Changes</button>
+                <button type="button" class="btn btn-success btn-sm d-none" OnClick="saveChanges()" id="saveChangesBtn">Save Changes</button>
               </div>
             </div>
           `;
@@ -73,92 +75,83 @@
         });
     });
 
-    function toggleEdit() {
-      toggleVisibility(
-        ["postTitle", "postSummary", "postBody", "postDetailsBtn"],
-        false
-      );
-      toggleVisibility(
-        [
+
+  function toggleEdit() {
+    toggleVisibility(
+      ["postTitle", "postSummary", "postBody"],
+      false
+    );
+    toggleVisibility(
+      ["postTitleInput", "postSummaryInput", "postBodyInput", "saveChangesBtn"],
+      true
+    );
+  }
+
+  function toggleVisibility(elements, visible) {
+    elements.forEach((element) => {
+      const el = document.getElementById(element);
+      if (el) {
+        el.classList.toggle("d-none", !visible);
+      }
+    });
+  }
+
+  function saveChanges() {
+    const postId = getPostIdFromUrl();
+    const updatedTitle = document.getElementById("postTitleInput").value;
+    const updatedSummary = document.getElementById("postSummaryInput").value;
+    const updatedBody = document.getElementById("postBodyInput").value;
+
+    fetch(`/post-details?id=${postId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        Title: updatedTitle,
+        Summary: updatedSummary,
+        Body: updatedBody,
+        author_name: document.getElementById("authorInput").value,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update post: ${response.status} ${response.statusText}`
+          );
+        }
+        return response.json();
+      })
+      .then((updatedPost) => {
+        document.getElementById("postTitle").innerText = updatedPost.Title;
+        document.getElementById("postSummary").innerText = updatedPost.Summary;
+        document.getElementById("postBody").innerText = updatedPost.Body;
+        document.getElementById("author").innerText = `Author: ${updatedPost.author_name}`;
+
+        const elementsToHide = [
           "postTitleInput",
           "postSummaryInput",
           "postBodyInput",
           "saveChangesBtn",
-        ],
-        true
-      );
-    }
+        ];
+        const elementsToShow = ["postTitle", "postSummary", "postBody"];
 
-    function toggleVisibility(elements, visible) {
-      elements.forEach((element) => {
-        const el = document.getElementById(element);
-        if (el) {
-          el.classList.toggle("d-none", !visible);
-        }
-      });
-    }
-
-    function saveChanges() {
-      const postId = getPostIdFromUrl();
-      const updatedTitle = document.getElementById("postTitleInput").value;
-      const updatedSummary =
-        document.getElementById("postSummaryInput").value;
-      const updatedBody = document.getElementById("postBodyInput").value;
-
-      fetch(`/post-details?id=${postId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: updatedTitle,
-          summary: updatedSummary,
-          body: updatedBody,
-          author_name: document.getElementById("authorInput").value,
-        }),
+        toggleVisibility(elementsToHide, false);
+        toggleVisibility(elementsToShow, true);
       })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              `Failed to update post: ${response.status} ${response.statusText}`
-            );
-          }
-          return response.json();
-        })
-        .then((updatedPost) => {
-          document.getElementById("postTitle").innerText = updatedPost.Title;
-          document.getElementById("postSummary").innerText =
-            updatedPost.Summary;
-          document.getElementById("postBody").innerText = updatedPost.Body;
-          document.getElementById(
-            "author"
-          ).innerText = `Author: ${updatedPost.author_name}`;
+      .catch((error) => {
+        console.error("Error updating post:", error);
+        alert("Error updating post. Please try again later.");
+      });
+  }
 
-          const elementsToHide = [
-            "postTitleInput",
-            "postSummaryInput",
-            "postBodyInput",
-            "saveChangesBtn",
-          ];
-          const elementsToShow = [
-            "postTitle",
-            "postSummary",
-            "postBody",
-            "postDetailsBtn",
-          ];
+  function getPostIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("id");
+  }
+</script>
 
-          toggleVisibility(elementsToHide, false);
-          toggleVisibility(elementsToShow, true);
-        })
-        .catch((error) => {
-          console.error("Error updating post:", error);
-          alert("Error updating post. Please try again later.");
-        });
-    }
-
-    function getPostIdFromUrl() {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get("id");
-    }
-  </script>
 </body>
+</html>
+
+
