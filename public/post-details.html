@@ -29,14 +29,60 @@
     <div class="container mt-4">
         <h4>Post Details</h4>
         <div id="postDetails"></div>
+        <button class="btn btn-primary mt-3" id="editButton">Edit</button>
+        <div id="editForm" style="display: none;">
+            <form id="editPostForm">
+                <div class="form-group">
+                    <label for="editTitle">Title</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="editTitle"
+                        name="title"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="editSummary">Summary</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="editSummary"
+                        name="summary"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="editComments">Comments</label>
+                    <textarea
+                        class="form-control"
+                        id="editComments"
+                        rows="3"
+                        name="comments"
+                    ></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Author</label><br>
+                    <!-- Assuming authorsData is available -->
+                    <div id="editAuthorRadio"></div>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
+            </form>
+        </div>
     </div>
 
     <script>
+        let postId; // Declare postId outside the DOMContentLoaded event listener
+
         document.addEventListener("DOMContentLoaded", function () {
             const urlParams = new URLSearchParams(window.location.search);
-            const postId = urlParams.get("id");
+            postId = urlParams.get("id"); // Assign the value to postId
 
             const postDetailsContainer = document.getElementById("postDetails");
+            const editButton = document.getElementById("editButton");
+            const editForm = document.getElementById("editForm");
+            const editTitleInput = document.getElementById("editTitle");
+            const editSummaryInput = document.getElementById("editSummary");
+            const editCommentsInput = document.getElementById("editComments");
+            const editAuthorRadioContainer = document.getElementById("editAuthorRadio");
 
             fetch(`/post-details?id=${postId}`)
                 .then((response) => {
@@ -55,116 +101,95 @@
                                 <p class="card-text" id="postSummary">${postDetails.Summary}</p>
                                 <p class="card-text" id="postBody">${postDetails.Body}</p>
                                 <p class="card-text">Author: ${postDetails.author_name}</p>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="toggleEdit()">Edit Post</button>
-
-                                <input type="text" class="form-control mb-2 d-none" id="postTitleInput" value="${postDetails.Title}">
-                                <textarea class="form-control mb-2 resize-none d-none" id="postSummaryInput">${postDetails.Summary}</textarea>
-                                <textarea class="form-control mb-2 resize-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
-
-                                <div class="form-group d-none" id="authorInputContainer">
-                                    <label for="authorInput">Author</label>
-                                    <input type="text" class="form-control" id="authorInput" value="${postDetails.author_name}">
-                                </div>
-
-                                <button type="button" class="btn btn-success btn-sm d-none" onclick="saveChanges()" id="saveChangesBtn">Save Changes</button>
                             </div>
                         </div>
                     `;
+
+                    // Set initial values for the edit form
+                    editTitleInput.value = postDetails.Title;
+                    editSummaryInput.value = postDetails.Summary;
+                    editCommentsInput.value = postDetails.Body;
+
+                    // Add radio buttons for authors
+                    fetch("/create-post") // Replace with the correct endpoint
+                        .then((response) => response.json())
+                        .then((authorsData) => {
+                            authorsData.forEach(function (author) {
+                                var radioInput = document.createElement("input");
+                                radioInput.type = "radio";
+                                radioInput.name = "editAuthor";
+                                radioInput.value = author.id;
+                                radioInput.id = `editAuthor_${author.id}`;
+
+                                var label = document.createElement("label");
+                                label.htmlFor = `editAuthor_${author.id}`;
+                                label.appendChild(document.createTextNode(author.name));
+
+                                editAuthorRadioContainer.appendChild(radioInput);
+                                editAuthorRadioContainer.appendChild(label);
+
+                                // Set initial value based on the post's author
+                                if (postDetails.author_id === author.id) {
+                                    radioInput.checked = true;
+                                }
+                            });
+                        })
+                        .catch((error) => console.error("Error fetching authors:", error));
                 })
                 .catch((error) => {
                     console.error("Error fetching post details:", error);
                     alert("Error fetching post details. Please try again later.");
                 });
+
+            editButton.addEventListener("click", function () {
+                // Toggle visibility of the edit form
+                editForm.style.display = editForm.style.display === "none" ? "block" : "none";
+            });
         });
 
-        function toggleEdit() {
-            toggleVisibility(
-                ["postTitle", "postSummary", "postBody", "authorInputContainer"],
-                false
-            );
-            toggleVisibility(
-                [
-                    "postTitleInput",
-                    "postSummaryInput",
-                    "postBodyInput",
-                    "saveChangesBtn",
-                ],
-                true
-            );
-        }
+        // ... (other parts of the script)
 
-        function toggleVisibility(elements, visible) {
-            elements.forEach((element) => {
-                const el = document.getElementById(element);
-                if (el) {
-                    el.classList.toggle("d-none", !visible);
-                }
-            });
-        }
+function saveChanges() {
+  // Get values from the edit form
+  const editedTitle = document.getElementById("editTitle").value;
+  const editedSummary = document.getElementById("editSummary").value;
+  const editedComments = document.getElementById("editComments").value;
+  const editedAuthorId = document.querySelector('input[name="editAuthor"]:checked').value;
 
-        function saveChanges() {
-    const postId = getPostIdFromUrl();
-    const updatedTitle = document.getElementById("postTitleInput").value;
-    const updatedSummary = document.getElementById("postSummaryInput").value;
-    const updatedBody = document.getElementById("postBodyInput").value;
-    const updatedAuthor = document.getElementById("authorInput").value;
+  // Make a PUT request to update the post details
+  fetch(`/post-list/${postId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: editedTitle,
+      summary: editedSummary,
+      comments: editedComments,
+      author: editedAuthorId,
+    }),
+  })
+    .then(response => response.json())
+    .then(updatedPost => {
+      // Check the structure of the updatedPost object
+      console.log("Updated Post:", updatedPost);
 
-    // Check if at least one field is non-empty
-    if (updatedTitle || updatedSummary || updatedBody || updatedAuthor) {
-        fetch(`/post-details?id=${postId}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                Title: updatedTitle,
-                Summary: updatedSummary,
-                Body: updatedBody,
-                author_name: updatedAuthor,
-            }),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(
-                        `Failed to update post: ${response.status} ${response.statusText}`
-                    );
-                }
-                return response.json();
-            })
-            .then((updatedPost) => {
-                document.getElementById("postTitle").innerText = updatedPost.Title;
-                document.getElementById("postSummary").innerText = updatedPost.Summary;
-                document.getElementById("postBody").innerText = updatedPost.Body;
+      // Update the displayed post details
+      document.getElementById("postTitle").innerText = updatedPost.Title;
+      document.getElementById("postSummary").innerText = updatedPost.Summary;
+      document.getElementById("postBody").innerText = updatedPost.Body;
+      document.querySelector('.card-text').innerText = `Author: ${updatedPost.author_name}`;
 
-                // Note: There was an issue here - 'author' ID wasn't present in your HTML
-                // document.getElementById("author").innerText = `Author: ${updatedPost.author_name}`;
-
-                const elementsToHide = [
-                    "postTitleInput",
-                    "postSummaryInput",
-                    "postBodyInput",
-                    "authorInputContainer",
-                    "saveChangesBtn",
-                ];
-                const elementsToShow = ["postTitle", "postSummary", "postBody"];
-
-                toggleVisibility(elementsToHide, false);
-                toggleVisibility(elementsToShow, true);
-            })
-            .catch((error) => {
-                console.error("Error updating post:", error);
-                alert("Error updating post. Please try again later.");
-            });
-    } else {
-        alert("No fields to update. Please make changes before saving.");
-    }
+      // Hide the edit form
+      document.getElementById("editForm").style.display = "none";
+    })
+    .catch((error) => console.error("Error updating post details:", error));
 }
 
-
-        function getPostIdFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get("id");
-        }
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"></script>
 </body>
 </html>
