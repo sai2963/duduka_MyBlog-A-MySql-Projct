@@ -1,157 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Post Details</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
-    crossorigin="anonymous"
-  />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post Details</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+        crossorigin="anonymous"
+    />
 </head>
-
 <body>
-  <nav class="navbar bg-body-tertiary">
-    <div class="container-fluid">
-      <a class="navbar-brand">My Blog</a>
-      <form class="d-flex" role="search">
-        <button class="btn btn-outline-success" type="menu">
-          <a href="post-list.html">All Posts</a>
-        </button>
-        <button class="btn btn-outline-success" type="button">
-          <a href="create-post.html">Create Posts</a>
-        </button>
-      </form>
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand">My Blog</a>
+            <form class="d-flex" role="search">
+                <button class="btn btn-outline-success" type="menu">
+                    <a href="post-list.html">All Posts</a>
+                </button>
+                <button class="btn btn-outline-success" type="button">
+                    <a href="create-post.html">Create Posts</a>
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h4>Post Details</h4>
+        <div id="postDetails"></div>
     </div>
-  </nav>
 
-  <div class="container mt-4">
-    <h4>Post Details</h4>
-    <div id="postDetails"></div>
-  </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get("id");
 
- <!-- ... (your existing HTML code) ... -->
+            const postDetailsContainer = document.getElementById("postDetails");
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      const postId = urlParams.get("id");
+            fetch(`/post-details?id=${postId}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Failed to fetch post details: ${response.status} ${response.statusText}`
+                        );
+                    }
+                    return response.json();
+                })
+                .then((postDetails) => {
+                    postDetailsContainer.innerHTML = `
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title" id="postTitle">${postDetails.Title}</h5>
+                                <p class="card-text" id="postSummary">${postDetails.Summary}</p>
+                                <p class="card-text" id="postBody">${postDetails.Body}</p>
+                                <p class="card-text">Author: ${postDetails.author_name}</p>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="toggleEdit()">Edit Post</button>
 
-      const postDetailsContainer = document.getElementById("postDetails");
+                                <input type="text" class="form-control mb-2 d-none" id="postTitleInput" value="${postDetails.Title}">
+                                <textarea class="form-control mb-2 resize-none d-none" id="postSummaryInput">${postDetails.Summary}</textarea>
+                                <textarea class="form-control mb-2 resize-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
 
-      fetch(`/post-details?id=${postId}`)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(
-              `Failed to fetch post details: ${response.status} ${response.statusText}`
-            );
-          }
-          return response.json();
-        })
-        .then((postDetails) => {
-          postDetailsContainer.innerHTML = `
-            <div class="card mt-3">
-              <div class="card-body">
-                <h5 class="card-title" id="postTitle">${postDetails.Title}</h5>
-                <p class="card-text" id="postSummary">${postDetails.Summary}</p>
-                <p class="card-text" id="postBody">${postDetails.Body}</p>
-                <p class="card-text">Author: ${postDetails.author_name}</p>
-                <button type="button" class="btn btn-primary btn-sm" onclick="toggleEdit()">Edit Post</button>
-                
-                <input type="text" class="form-control mb-2 d-none" id="postTitleInput" value="${postDetails.Title}">
-                <textarea class="form-control mb-2 resize-none d-none" id="postSummaryInput">${postDetails.Summary}</textarea>
-                <textarea class="form-control mb-2 resi ze-none d-none" id="postBodyInput">${postDetails.Body}</textarea>
-                
-                <button type="button" class="btn btn-success btn-sm d-none" OnClick="saveChanges()" id="saveChangesBtn">Save Changes</button>
-              </div>
-            </div>
-          `;
-        })
-        .catch((error) => {
-          console.error("Error fetching post details:", error);
-          alert("Error fetching post details. Please try again later.");
+                                <div class="form-group d-none" id="authorInputContainer">
+                                    <label for="authorInput">Author</label>
+                                    <input type="text" class="form-control" id="authorInput" value="${postDetails.author_name}">
+                                </div>
+
+                                <button type="button" class="btn btn-success btn-sm d-none" onclick="saveChanges()" id="saveChangesBtn">Save Changes</button>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch((error) => {
+                    console.error("Error fetching post details:", error);
+                    alert("Error fetching post details. Please try again later.");
+                });
         });
-    });
 
+        function toggleEdit() {
+            toggleVisibility(
+                ["postTitle", "postSummary", "postBody", "authorInputContainer"],
+                false
+            );
+            toggleVisibility(
+                [
+                    "postTitleInput",
+                    "postSummaryInput",
+                    "postBodyInput",
+                    "saveChangesBtn",
+                ],
+                true
+            );
+        }
 
-  function toggleEdit() {
-    toggleVisibility(
-      ["postTitle", "postSummary", "postBody"],
-      false
-    );
-    toggleVisibility(
-      ["postTitleInput", "postSummaryInput", "postBodyInput", "saveChangesBtn"],
-      true
-    );
-  }
+        function toggleVisibility(elements, visible) {
+            elements.forEach((element) => {
+                const el = document.getElementById(element);
+                if (el) {
+                    el.classList.toggle("d-none", !visible);
+                }
+            });
+        }
 
-  function toggleVisibility(elements, visible) {
-    elements.forEach((element) => {
-      const el = document.getElementById(element);
-      if (el) {
-        el.classList.toggle("d-none", !visible);
-      }
-    });
-  }
-
-  function saveChanges() {
+        function saveChanges() {
     const postId = getPostIdFromUrl();
     const updatedTitle = document.getElementById("postTitleInput").value;
     const updatedSummary = document.getElementById("postSummaryInput").value;
     const updatedBody = document.getElementById("postBodyInput").value;
+    const updatedAuthor = document.getElementById("authorInput").value;
 
-    fetch(`/post-details?id=${postId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        Title: updatedTitle,
-        Summary: updatedSummary,
-        Body: updatedBody,
-        author_name: document.getElementById("authorInput").value,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(
-            `Failed to update post: ${response.status} ${response.statusText}`
-          );
+    // Check if at least one field is non-empty
+    if (updatedTitle || updatedSummary || updatedBody || updatedAuthor) {
+        fetch(`/post-details?id=${postId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                Title: updatedTitle,
+                Summary: updatedSummary,
+                Body: updatedBody,
+                author_name: updatedAuthor,
+            }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to update post: ${response.status} ${response.statusText}`
+                    );
+                }
+                return response.json();
+            })
+            .then((updatedPost) => {
+                document.getElementById("postTitle").innerText = updatedPost.Title;
+                document.getElementById("postSummary").innerText = updatedPost.Summary;
+                document.getElementById("postBody").innerText = updatedPost.Body;
+
+                // Note: There was an issue here - 'author' ID wasn't present in your HTML
+                // document.getElementById("author").innerText = `Author: ${updatedPost.author_name}`;
+
+                const elementsToHide = [
+                    "postTitleInput",
+                    "postSummaryInput",
+                    "postBodyInput",
+                    "authorInputContainer",
+                    "saveChangesBtn",
+                ];
+                const elementsToShow = ["postTitle", "postSummary", "postBody"];
+
+                toggleVisibility(elementsToHide, false);
+                toggleVisibility(elementsToShow, true);
+            })
+            .catch((error) => {
+                console.error("Error updating post:", error);
+                alert("Error updating post. Please try again later.");
+            });
+    } else {
+        alert("No fields to update. Please make changes before saving.");
+    }
+}
+
+
+        function getPostIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get("id");
         }
-        return response.json();
-      })
-      .then((updatedPost) => {
-        document.getElementById("postTitle").innerText = updatedPost.Title;
-        document.getElementById("postSummary").innerText = updatedPost.Summary;
-        document.getElementById("postBody").innerText = updatedPost.Body;
-        document.getElementById("author").innerText = `Author: ${updatedPost.author_name}`;
-
-        const elementsToHide = [
-          "postTitleInput",
-          "postSummaryInput",
-          "postBodyInput",
-          "saveChangesBtn",
-        ];
-        const elementsToShow = ["postTitle", "postSummary", "postBody"];
-
-        toggleVisibility(elementsToHide, false);
-        toggleVisibility(elementsToShow, true);
-      })
-      .catch((error) => {
-        console.error("Error updating post:", error);
-        alert("Error updating post. Please try again later.");
-      });
-  }
-
-  function getPostIdFromUrl() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("id");
-  }
-</script>
-
+    </script>
 </body>
 </html>
-
-

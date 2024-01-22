@@ -102,28 +102,64 @@ router.put('/post-details', (req, res) => {
     return;
   }
 
-  db.query(
-    'UPDATE posts SET Title = ?, Summary = ?, Body = ?, author_id = (SELECT id FROM authors WHERE name = ?) WHERE id = ?',
-    [title, summary, body, author_name, postId],
-    (err, result) => {
-      if (err) {
-        console.error('Error updating post in the database:', err);
-        res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  const updateParams = [];
+  const queryParams = [];
+
+  if (title !== undefined) {
+    updateParams.push('Title = ?');
+    queryParams.push(title);
+  }
+
+  if (summary !== undefined) {
+    updateParams.push('Summary = ?');
+    queryParams.push(summary);
+  }
+
+  if (body !== undefined) {
+    updateParams.push('Body = ?');
+    queryParams.push(body);
+  }
+
+  if (author_name !== undefined) {
+    updateParams.push('author_id = (SELECT id FROM authors WHERE name = ?)');
+    queryParams.push(author_name);
+  }
+
+  // Ensure there is at least one field to update
+  if (updateParams.length === 0) {
+    res.status(400).json({ error: 'No fields to update.' });
+    return;
+  }
+
+  queryParams.push(postId); // Add post ID for WHERE clause
+
+  const updateQuery = `UPDATE posts SET ${updateParams.join(', ')} WHERE id = ?`;
+
+  console.log('Update Query:', updateQuery);
+  console.log('Query Params:', queryParams);
+
+  db.query(updateQuery, queryParams, (err, result) => {
+    if (err) {
+      console.error('Error updating post in the database:', err);
+      res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    } else {
+      console.log('Update Result:', result);
+      if (result.affectedRows === 0) {
+        res.status(404).json({ error: 'Post not found.' });
       } else {
-        if (result.affectedRows === 0) {
-          res.status(404).json({ error: 'Post not found.' });
-        } else {
-          res.status(200).json({
-            id: postId,
-            Title: title,
-            Summary: summary,
-            Body: body,
-            author_name: author_name,
-          });
-        }
+        res.status(200).json({
+          id: postId,
+          Title: title !== undefined ? title : null,
+          Summary: summary !== undefined ? summary : null,
+          Body: body !== undefined ? body : null,
+          author_name: author_name !== undefined ? author_name : null,
+        });
       }
     }
-  );
+  });
 });
+
+
+
 
 module.exports = router;
