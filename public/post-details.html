@@ -149,42 +149,51 @@
 
         // ... (other parts of the script)
 
-function saveChanges() {
-  // Get values from the edit form
-  const editedTitle = document.getElementById("editTitle").value;
-  const editedSummary = document.getElementById("editSummary").value;
-  const editedComments = document.getElementById("editComments").value;
-  const editedAuthorId = document.querySelector('input[name="editAuthor"]:checked').value;
+        function saveChanges() {
+    // Get values from the edit form
+    const editedTitle = document.getElementById("editTitle").value;
+    const editedSummary = document.getElementById("editSummary").value;
+    const editedComments = document.getElementById("editComments").value;
+    const editedAuthorId = document.querySelector('input[name="editAuthor"]:checked').value;
 
-  // Make a PUT request to update the post details
-  fetch(`/post-list/${postId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: editedTitle,
-      summary: editedSummary,
-      comments: editedComments,
-      author: editedAuthorId,
-    }),
-  })
-    .then(response => response.json())
-    .then(updatedPost => {
-      // Check the structure of the updatedPost object
-      console.log("Updated Post:", updatedPost);
+    // Check if title is not empty
+    if (!editedTitle.trim()) {
+        alert("Title cannot be empty");
+        return;
+    }
 
-      // Update the displayed post details
-      document.getElementById("postTitle").innerText = updatedPost.Title;
-      document.getElementById("postSummary").innerText = updatedPost.Summary;
-      document.getElementById("postBody").innerText = updatedPost.Body;
-      document.querySelector('.card-text').innerText = `Author: ${updatedPost.author_name}`;
-
-      // Hide the edit form
-      document.getElementById("editForm").style.display = "none";
+    // Make a PUT request to update the post details
+    fetch(`/post-list/${postId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            title: editedTitle,
+            summary: editedSummary,
+            comments: editedComments,
+            author: editedAuthorId,
+        }),
     })
-    .catch((error) => console.error("Error updating post details:", error));
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to update post details: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(updatedPost => {
+            // Update the displayed post details
+            document.getElementById("postTitle").innerText = updatedPost.title;
+            document.getElementById("postSummary").innerText = updatedPost.summary;
+            document.getElementById("postBody").innerText = updatedPost.body;
+            document.querySelector('.card-text').innerText = `Author: ${updatedPost.author_name}`;
+
+            // Hide the edit form
+            document.getElementById("editForm").style.display = "none";
+        })
+        .catch((error) => console.error("Error updating post details:", error));
 }
+
 
     </script>
 

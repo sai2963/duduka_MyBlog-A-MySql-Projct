@@ -75,66 +75,34 @@ router.get("/post-details", (req, res) => {
   );
 });
 
-router.delete("/post-list/:id", (req, res) => {
-  const postId = req.params.id;
-
-  if (!postId) {
-    res.status(400).json({ error: "Post ID is required." });
-    return;
-  }
-
-  db.query("DELETE FROM posts WHERE id = ?", [postId], (err, result) => {
-    if (err) {
-      console.error("Error deleting post from the database:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    } else {
-      res.status(200).json({ id: postId });
-    }
-  });
-});
-
 router.put("/post-list/:id", (req, res) => {
   const postId = req.params.id;
   const { title, summary, comments, author } = req.body;
 
   if (!postId) {
-    return res.status(400).json({ error: "Post ID is required." });
+      return res.status(400).json({ error: "Post ID is required." });
+  }
+
+  // Check if title is not empty
+  if (!title.trim()) {
+      return res.status(400).json({ error: "Title cannot be empty." });
   }
 
   db.query(
-    "UPDATE posts SET Title = ?, Summary = ?, Body = ?, author_id = ? WHERE id = ?",
-    [title, summary, comments, author, postId],
-    (err, result) => {
-      if (err) {
-        console.error("Error updating post in the database:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-
-      // Check if the update affected any rows
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Post not found." });
-      }
-
-      // Fetch the updated post details
-      db.query(
-        "SELECT posts.*, authors.name AS author_name FROM posts JOIN authors ON posts.author_id = authors.id WHERE posts.id = ?",
-        [postId],
-        (err, updatedPost) => {
+      "UPDATE posts SET Title = ?, Summary = ?, Body = ?, author_id = ? WHERE id = ?",
+      [title, summary, comments, author, postId],
+      (err, result) => {
           if (err) {
-            console.error("Error fetching updated post details:", err);
-            return res.status(500).json({ error: "Internal Server Error" });
+              console.error("Error updating post in the database:", err);
+              return res.status(500).json({ error: "Internal Server Error", details: err.message });
           }
 
-          if (updatedPost.length === 0) {
-            return res.status(404).json({ error: "Post not found." });
-          }
-
-          res.status(200).json(updatedPost[0]);
-        }
-      );
-    }
+          // If the update is successful, you can send a success response or the updated post details.
+          res.status(200).json({ message: "Post updated successfully", result });
+      }
   );
 });
+
 
 
 module.exports = router;
