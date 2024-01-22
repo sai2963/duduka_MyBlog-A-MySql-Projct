@@ -83,26 +83,22 @@ router.put("/post-list/:id", (req, res) => {
       return res.status(400).json({ error: "Post ID is required." });
   }
 
-  // Check if title is not empty
-  if (!title.trim()) {
-      return res.status(400).json({ error: "Title cannot be empty." });
-  }
-
   db.query(
       "UPDATE posts SET Title = ?, Summary = ?, Body = ?, author_id = ? WHERE id = ?",
       [title, summary, comments, author, postId],
       (err, result) => {
           if (err) {
               console.error("Error updating post in the database:", err);
-              return res.status(500).json({ error: "Internal Server Error", details: err.message });
+              return res
+                  .status(500)
+                  .json({ error: "Internal Server Error", details: err.message });
+          } else {
+              // If the update is successful, you can send a success response or the updated post details.
+              console.log("Post updated successfully:", result);
+              res.status(200).json({ message: "Post updated successfully", result });
           }
-
-          // If the update is successful, you can send a success response or the updated post details.
-          res.status(200).json({ message: "Post updated successfully", result });
       }
   );
 });
-
-
 
 module.exports = router;
