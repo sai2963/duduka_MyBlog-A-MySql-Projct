@@ -75,30 +75,74 @@ router.get("/post-details", (req, res) => {
   );
 });
 
+
+
 router.put("/post-list/:id", (req, res) => {
   const postId = req.params.id;
   const { title, summary, comments, author } = req.body;
 
   if (!postId) {
-      return res.status(400).json({ error: "Post ID is required." });
+    return res.status(400).json({ error: "Post ID is required." });
   }
 
-  db.query(
+  // Fetch author details
+  db.query("SELECT * FROM authors WHERE id = ?", [author], (authorErr, authorResult) => {
+    if (authorErr) {
+      console.error("Error fetching author details from the database:", authorErr);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    // Check if the author exists
+    if (authorResult.length === 0) {
+      return res.status(400).json({ error: "Author not found." });
+    }
+
+    // Update post details
+    db.query(
       "UPDATE posts SET Title = ?, Summary = ?, Body = ?, author_id = ? WHERE id = ?",
       [title, summary, comments, author, postId],
       (err, result) => {
-          if (err) {
-              console.error("Error updating post in the database:", err);
-              return res
-                  .status(500)
-                  .json({ error: "Internal Server Error", details: err.message });
-          } else {
-              // If the update is successful, you can send a success response or the updated post details.
-              console.log("Post updated successfully:", result);
-              res.status(200).json({ message: "Post updated successfully", result });
-          }
+        if (err) {
+          console.error("Error updating post in the database:", err);
+          return res.status(500).json({ error: "Internal Server Error", details: err.message });
+        }
+
+        // If the update is successful, you can send a success response or the updated post details.
+        res.status(200).json({ message: "Post updated successfully", result });
       }
+    );
+  });
+});
+// ... (unchanged code)
+
+router.get("/post-details", (req, res) => {
+  const postId = req.query.id;
+
+  if (!postId) {
+    res.status(400).json({ error: "Post ID is required." });
+    return;
+  }
+
+  // Use a JOIN to fetch post details along with author's name
+  db.query(
+    "SELECT posts.*, authors.name AS author_name FROM posts JOIN authors ON posts.author_id = authors.id WHERE posts.id = ?",
+    [postId],
+    (err, results) => {
+      if (err) {
+        console.error("Error fetching post details from the database:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+      } else {
+        if (results.length === 0) {
+          res.status(404).json({ error: "Post not found." });
+        } else {
+          res.status(200).json(results[0]);
+        }
+      }
+    }
   );
 });
+
+// ... (unchanged code)
+
 
 module.exports = router;
