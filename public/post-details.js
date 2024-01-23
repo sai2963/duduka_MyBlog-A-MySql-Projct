@@ -66,6 +66,9 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => console.error("Error updating post:", error));
   }
 
+  // Assign saveChanges to the window object
+  window.saveChanges = saveChanges;
+
   // Event listener for the "Edit" button
   editButton.addEventListener("click", showEditForm);
 
@@ -98,7 +101,6 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
       editTitleInput.value = postDetails.Title;
-        console.log(postDetails.Title)
       editSummaryInput.value = postDetails.Summary;
       editCommentsInput.value = postDetails.Body;
     })
